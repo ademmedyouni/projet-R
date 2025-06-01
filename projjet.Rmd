@@ -1,0 +1,407 @@
+---
+title: "project"
+author: "adem medyouni"
+date: "2025-04-29"
+output: pdf_document
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+mydata <- read.csv("data.csv", header=TRUE)
+# Reads the CSV file using semicolon separator
+attach(mydata)
+typeof(mydata)# Makes the columns of the dataframe available by name
+mydata                                        # Displays the content of the dataframe
+T=table(names(mydata))
+T
+typeof(names(mydata))
+names(mydata)[2]
+mydata$tip
+T1=table(mydata$gender)
+T1
+```
+```{r}
+# 1. Importer les données
+mydata <- read.csv("data.csv", header = TRUE)
+
+# 2. Calcul du nombre d'observations
+n <- nrow(mydata)
+
+# 3. Calcul du nombre de classes (J)
+J_sturges <- ceiling(1 + (10 * log10(n) / 3))  # Règle de Sturges
+J_yule <- ceiling(2.5 * n^(1/4))               # Règle de Yule
+
+# Affichage des deux méthodes
+cat("Nombre de classes selon Sturges :", J_sturges, "\n")
+cat("Nombre de classes selon Yule    :", J_yule, "\n")
+
+# 4. Choisir un nombre de classes (par exemple Sturges)
+J <- J_sturges
+
+# 5. Répartition en classes pour total_bill
+min_tb <- min(mydata$total_bill, na.rm = TRUE)
+max_tb <- max(mydata$total_bill, na.rm = TRUE)
+amplitude_tb <- (max_tb - min_tb) / J
+cat("Amplitude total_bill :", amplitude_tb, "\n")
+
+classes_tb <- cut(mydata$total_bill, breaks = J)
+table_tb <- table(classes_tb)
+print(table_tb)
+
+# 6. Répartition en classes pour tip
+min_tip <- min(mydata$tip, na.rm = TRUE)
+max_tip <- max(mydata$tip, na.rm = TRUE)
+amplitude_tip <- (max_tip - min_tip) / J
+cat("Amplitude tip :", amplitude_tip, "\n")
+
+classes_tip <- cut(mydata$tip, breaks = J)
+table_tip <- table(classes_tip)
+print(table_tip)
+
+```
+```{r}
+freq_tb_rel <- prop.table(table_tb)
+freq_tb_cum <- cumsum(freq_tb_rel)
+
+# Résumé complet
+stat_tb <- data.frame(
+  Classe = names(table_tb),
+  Effectif = as.numeric(table_tb),
+  Fréquence = round(as.numeric(freq_tb_rel), 3),
+  Fréquence_cumulée = round(as.numeric(freq_tb_cum), 3)
+)
+
+print(stat_tb)
+#pour tip:
+freq_tip_rel <- prop.table(table_tip)
+freq_tip_cum <- cumsum(freq_tip_rel)
+
+# Résumé
+stat_tip <- data.frame(
+  Classe = names(table_tip),
+  Effectif = as.numeric(table_tip),
+  Fréquence = round(as.numeric(freq_tip_rel), 3),
+  Fréquence_cumulée = round(as.numeric(freq_tip_cum), 3)
+)
+
+print(stat_tip)
+```
+
+```{r}
+#gender:
+T_gender <- table(mydata$gender)
+prop.table(T_gender)
+#day:
+T_day <- table(mydata$day)
+prop.table(T_day)
+#time:
+T_time <- table(mydata$time)
+prop.table(T_time)
+#size:
+T_size <- table(mydata$size)
+prop.table(T_size)
+
+```
+```{r}
+# 1. Histogramme - total_bill
+h1 <-hist(mydata$total_bill,
+     main = "Histogramme de total_bill",
+     xlab = "Montant total",
+     col = "skyblue",
+     breaks = J,
+     ylim = c(0, max(hist(mydata$total_bill, breaks = J, plot = FALSE)$counts) * 1.1))
+text(h1$mids, h1$counts, labels = h1$counts, pos = 3)
+
+# 2. Histogramme - tip
+h2 <-hist(mydata$tip,
+     main = "Histogramme de tip",
+     xlab = "Pourboire",
+     col = "salmon",
+     breaks = J,
+     ylim = c(0, max(hist(mydata$tip, breaks = J, plot = FALSE)$counts) * 1.1))
+text(h2$mids, h2$counts, labels = h2$counts, pos = 3)
+
+# 3. Histogramme - size
+nb_size <- length(unique(mydata$size))
+h3<-hist(mydata$size,
+     main = "Histogramme de size",
+     xlab = "Taille de la table",
+     col = "lightgreen",
+     breaks = nb_size,
+     ylim = c(0, max(hist(mydata$size, breaks = nb_size, plot = FALSE)$counts) * 1.1))
+text(h3$mids, h3$counts, labels = h3$counts, pos = 3)
+
+# 4. Diagramme en barres - gender
+gender_table <- table(mydata$gender)
+barplot(gender_table,
+        main = "Genre",
+        col = c("lightblue", "pink"),
+        ylim = c(0, max(gender_table) * 1.1))
+text(x = seq_along(gender_table),
+     y = gender_table,
+     labels = gender_table,
+     pos = 3)
+
+# 5. Diagramme en barres - day
+day_table <- table(mydata$day)
+barplot(day_table,
+        main = "Jour de la semaine",
+        col = rainbow(length(day_table)),
+        ylim = c(0, max(day_table) * 1.1))
+text(x = seq_along(day_table),
+     y = day_table,
+     labels = day_table,
+     pos = 3)
+
+# 6. Diagramme en barres - time
+time_table <- table(mydata$time)
+barplot(time_table,
+        main = "Moment de la journée",
+        col = c("orange", "lightgreen"),
+        ylim = c(0, max(time_table) * 1.1))
+text(x = seq_along(time_table),
+     y = time_table,
+     labels = time_table,
+     pos = 3)
+# Diagramme en secteurs - gender
+# Diagramme en secteurs - gender avec les numéros (fréquences)
+gender_table <- table(mydata$gender)
+labels <- paste(names(gender_table), ": ", gender_table, sep = "")  # Créer les étiquettes avec les fréquences
+pie(gender_table, main = "Répartition par genre", col = c("lightblue", "pink"), labels = labels)
+
+# Fonction de répartition - total_bill
+total_bill_cdf <- ecdf(mydata$total_bill)
+plot(total_bill_cdf, main = "Fonction de répartition de total_bill", xlab = "Montant total", ylab = "F(x)")
+
+
+```
+
+```{r}
+# Charger les librairies nécessaires
+library(e1071)  # pour skewness et kurtosis
+
+# Fonction pour calculer et afficher les paramètres statistiques pour une variable donnée
+calculate_stats <- function(variable) {
+  # Paramètres de position
+  mean_var <- mean(variable, na.rm = TRUE)         # Moyenne
+  median_var <- median(variable, na.rm = TRUE)     # Médiane
+  
+  # Paramètres de dispersion
+  var_var <- var(variable, na.rm = TRUE)           # Variance
+  sd_var <- sd(variable, na.rm = TRUE)             # Écart-type
+  range_var <- range(variable, na.rm = TRUE)       # Plage (min, max)
+  IQR_var <- IQR(variable, na.rm = TRUE)           # Intervalle interquartile
+  
+  # Paramètres de forme
+  skewness_var <- skewness(variable, na.rm = TRUE) # Asymétrie
+  kurtosis_var <- kurtosis(variable, na.rm = TRUE) # Aplatissement
+  
+  # Affichage des résultats
+  cat("Paramètres de position:\n")
+  cat("Moyenne : ", mean_var, "\n")
+  cat("Médiane : ", median_var, "\n")
+  cat("Paramètres de dispersion:\n")
+  cat("Variance : ", var_var, "\n")
+  cat("Écart-type : ", sd_var, "\n")
+  cat("Plage : ", range_var, "\n")
+  cat("Intervalle interquartile : ", IQR_var, "\n")
+  cat("Paramètres de forme:\n")
+  cat("Asymétrie : ", skewness_var, "\n")
+  cat("Aplatissement : ", kurtosis_var, "\n")
+  cat("\n")
+}
+
+# Application aux variables quantitatives
+cat("### Paramètres pour total_bill ###\n")
+calculate_stats(mydata$total_bill)
+
+cat("### Paramètres pour tip ###\n")
+calculate_stats(mydata$tip)
+
+cat("### Paramètres pour size ###\n")
+calculate_stats(mydata$size)
+
+# Fonction pour les variables qualitatives (catégorielles)
+calculate_cat_stats <- function(variable) {
+  # Fréquence des modalités
+  freq_var <- table(variable)
+  
+  # Affichage des résultats
+  cat("Fréquence des modalités : \n")
+  print(freq_var)
+  
+  # Asymétrie et aplatissement ne sont pas calculés pour les variables catégorielles
+  cat("\n")
+}
+
+# Application aux variables qualitatives
+cat("### Fréquence pour gender ###\n")
+calculate_cat_stats(mydata$gender)
+
+cat("### Fréquence pour day ###\n")
+calculate_cat_stats(mydata$day)
+
+cat("### Fréquence pour time ###\n")
+calculate_cat_stats(mydata$time)
+
+```
+```{r}
+# 1. Importer les données
+mydata <- read.csv("data.csv", header = TRUE)
+
+# 2. Vérifier les colonnes
+print(names(mydata))  # Affiche les noms des colonnes
+
+# Fonction pour ajouter des annotations au boxplot
+annotated_boxplot <- function(data, variable, title) {
+  # Calcul des statistiques
+  stats <- boxplot.stats(data[[variable]])
+  q <- quantile(data[[variable]], probs = c(0.25, 0.5, 0.75))
+  
+  # Création du boxplot
+  boxplot(data[[variable]], 
+          main = title,
+          horizontal = TRUE,
+          col = "lightblue",
+          xlab = variable)
+  
+  # Ajout des annotations
+  text(x = q[2], y = 1.3, paste("Médiane =", round(q[2], 2)), 
+       col = "red", cex = 0.8)
+  text(x = q[1], y = 0.7, paste("Q1 =", round(q[1], 2)), 
+       col = "blue", cex = 0.8)
+  text(x = q[3], y = 0.7, paste("Q3 =", round(q[3], 2)), 
+       col = "blue", cex = 0.8)
+  text(x = stats$stats[1], y = 1.1, paste("Min =", round(stats$stats[1], 2)), 
+       col = "darkgreen", cex = 0.8)
+  text(x = stats$stats[5], y = 1.1, paste("Max =", round(stats$stats[5], 2)), 
+       col = "darkgreen", cex = 0.8)
+  
+  # Affichage des outliers si existants
+  if(length(stats$out) > 0) {
+    text(x = max(stats$out), y = 1.4, 
+         paste(length(stats$out), "outlier(s)"), 
+         col = "purple", cex = 0.8)
+  }
+}
+
+# 3. Générer les boxplots annotés
+if ("total_bill" %in% names(mydata)) {
+  annotated_boxplot(mydata, "total_bill", "Boxplot de total_bill avec annotations")
+}
+
+if ("tip" %in% names(mydata)) {
+  annotated_boxplot(mydata, "tip", "Boxplot de tip avec annotations")
+}
+
+# 4. Boxplot pour 'size' si la colonne existe
+if ("size" %in% names(mydata)) {
+  annotated_boxplot(mydata, "size", "Boxplot de size avec annotations")
+} else {
+  print("La colonne 'size' est absente du jeu de données.")
+}
+
+# 5. Sauvegarder les graphiques
+png("boxplots_annotés.png", width = 800, height = 600)
+par(mfrow = c(1, 3))  # 1 ligne, 3 colonnes pour afficher côte à côte
+
+if ("total_bill" %in% names(mydata)) {
+  annotated_boxplot(mydata, "total_bill", "Total Bill")
+}
+
+if ("tip" %in% names(mydata)) {
+  annotated_boxplot(mydata, "tip", "Tip")
+}
+
+if ("size" %in% names(mydata)) {
+  annotated_boxplot(mydata, "size", "Size")
+} else {
+  plot.new()
+  text(0.5, 0.5, "Size non disponible", cex = 1.2)
+}
+
+dev.off()
+```
+```{r}
+# 1. Calcul des variances marginales, des moyennes marginales, des écarts-types marginaux et des quantiles marginaux
+
+# Variables
+total_bill <- mydata$total_bill
+tip <- mydata$tip
+
+# Moyennes marginales
+mean_total_bill <- mean(total_bill)
+mean_tip <- mean(tip)
+
+# Variances marginales
+var_total_bill <- var(total_bill)
+var_tip <- var(tip)
+
+# Écarts-types marginaux
+sd_total_bill <- sd(total_bill)
+sd_tip <- sd(tip)
+
+# Quantiles marginaux
+quantiles_total_bill <- quantile(total_bill)
+quantiles_tip <- quantile(tip)
+
+# Afficher les résultats
+cat("Moyenne total_bill:", mean_total_bill, "\n")
+cat("Moyenne tip:", mean_tip, "\n")
+cat("Variance total_bill:", var_total_bill, "\n")
+cat("Variance tip:", var_tip, "\n")
+cat("Écart-type total_bill:", sd_total_bill, "\n")
+cat("Écart-type tip:", sd_tip, "\n")
+cat("Quantiles total_bill:", quantiles_total_bill, "\n")
+cat("Quantiles tip:", quantiles_tip, "\n")
+
+# 2. Calcul de la covariance
+covariance <- cov(total_bill, tip)
+cat("Covariance entre total_bill et tip:", covariance, "\n")
+
+# 3. Calcul du coefficient de corrélation
+correlation <- cor(total_bill, tip)
+cat("Coefficient de corrélation entre total_bill et tip:", correlation, "\n")
+
+# 4. Calcul du coefficient de détermination
+r_squared <- correlation^2
+cat("Coefficient de détermination (R²) :", r_squared, "\n")
+
+# 5. Représentation graphique du nuage de points
+plot(total_bill, tip, 
+     main = "Nuage de points entre total_bill et tip", 
+     xlab = "Total Bill", 
+     ylab = "Tip", 
+     col = "blue", 
+     pch = 16)
+
+# 6. Représentation de la droite de régression
+model <- lm(tip ~ total_bill)
+abline(model, col = "red", lwd = 2)
+
+# Résumé du modèle de régression
+cat("\nRésumé du modèle de régression:\n")
+summary(model)
+
+```
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
